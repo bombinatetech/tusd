@@ -182,12 +182,12 @@ func (handler *UnroutedHandler) Middleware(h http.Handler) http.Handler {
 			if r.Method == "OPTIONS" {
 				// Preflight request
 				header.Add("Access-Control-Allow-Methods", "POST, GET, HEAD, PATCH, DELETE, OPTIONS")
-				header.Add("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Upload-Length, Upload-Offset, Tus-Resumable, Upload-Metadata, Upload-Defer-Length, Upload-Concat")
+				header.Add("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Upload-Length, Upload-Offset, Tus-Resumable, Upload-Metadata, Upload-Defer-Length, Upload-Concat", "FileId")
 				header.Set("Access-Control-Max-Age", "86400")
 
 			} else {
 				// Actual request
-				header.Add("Access-Control-Expose-Headers", "Upload-Offset, Location, Upload-Length, Tus-Version, Tus-Resumable, Tus-Max-Size, Tus-Extension, Upload-Metadata, Upload-Defer-Length, Upload-Concat")
+				header.Add("Access-Control-Expose-Headers", "Upload-Offset, Location, Upload-Length, Tus-Version, Tus-Resumable, Tus-Max-Size, Tus-Extension, Upload-Metadata, Upload-Defer-Length, Upload-Concat", "FileId")
 			}
 		}
 
@@ -288,7 +288,7 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 
 	// Parse metadata
 	meta := ParseMetadataHeader(r.Header.Get("Upload-Metadata"))
-	file_id := r.Header.Get("FileId")
+	var file_id := r.Header.Get("FileId")
 
 	info := FileInfo{
 		Size:           size,
@@ -316,7 +316,7 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Location", url)
 
 	handler.Metrics.incUploadsCreated()
-	handler.log("UploadCreated", "id", id, "size", i64toa(size), "url", url, "file_id", file_id)
+	handler.log("UploadCreated", "file_id", file_id, "id", id, "size", i64toa(size), "url", url)
 
 	if handler.config.NotifyCreatedUploads {
 		handler.CreatedUploads <- info
