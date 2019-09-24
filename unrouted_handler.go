@@ -316,7 +316,7 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Location", url)
 
 	handler.Metrics.incUploadsCreated()
-	handler.log("UploadCreated", "id", id, "size", i64toa(size), "url", url)
+	handler.log("UploadCreated", "id", id, "size", i64toa(size), "url", url, "file_id", file_id)
 
 	if handler.config.NotifyCreatedUploads {
 		handler.CreatedUploads <- info
