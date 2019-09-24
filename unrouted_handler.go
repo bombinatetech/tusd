@@ -170,7 +170,7 @@ func (handler *UnroutedHandler) Middleware(h http.Handler) http.Handler {
 			r.Method = newMethod
 		}
 
-		handler.log("RequestIncoming", "method", r.Method, "path", r.URL.Path, "file_id", r.Header.Get("FileId"))
+		handler.log("RequestIncoming", "method", r.Method, "path", r.URL.Path)
 
 		handler.Metrics.incRequestsTotal(r.Method)
 
@@ -288,9 +288,10 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 
 	// Parse metadata
 	meta := ParseMetadataHeader(r.Header.Get("Upload-Metadata"))
-	var file_id string 
-	file_id = r.Header.Get("FileId")
-	handler.log("FileId", r.Header.Get("FileId"))
+	// var file_id string 
+	// file_id = r.Header.Get("FileId")
+	// handler.log("FileId", r.Header.Get("FileId"))
+	handler.log("Meta", meta)
 
 	info := FileInfo{
 		Size:           size,
@@ -299,7 +300,7 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 		IsPartial:      isPartial,
 		IsFinal:        isFinal,
 		PartialUploads: partialUploads,
-		ID: 			file_id
+		ID: 			meta.Get("filename")
 	}
 
 	id, err := handler.composer.Core.NewUpload(info)
@@ -308,7 +309,7 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if file_id == nil {
+	if info.ID == nil {
 		info.ID = id
 	}
 
