@@ -289,7 +289,7 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 	// Parse metadata
 	meta := ParseMetadataHeader(r.Header.Get("Upload-Metadata"))
 	var file_id string 
-	file_id := r.Header.Get("FileId")
+	file_id = r.Header.Get("FileId")
 	handler.log("FileId", r.Header.Get("FileId"))
 
 	info := FileInfo{
@@ -318,7 +318,7 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Location", url)
 
 	handler.Metrics.incUploadsCreated()
-	handler.log("UploadCreated", "file_id", file_id, "id", id, "size", i64toa(size), "url", url)
+	handler.log("UploadCreated", "id", id, "size", i64toa(size), "url", url)
 
 	if handler.config.NotifyCreatedUploads {
 		handler.CreatedUploads <- info
