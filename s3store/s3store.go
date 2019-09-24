@@ -201,15 +201,15 @@ func (store S3Store) NewUpload(info tusd.FileInfo) (id string, err error) {
 		return "", fmt.Errorf("s3store: unable to create multipart upload:\n%s", err)
 	}
 
-	id = uploadId + "+" + *res.UploadId
-	info.ID = id
+	// id = uploadId + "+" + *res.UploadId
+	info.ID = uploadId
 
 	err = store.writeInfo(uploadId, info)
 	if err != nil {
 		return "", fmt.Errorf("s3store: unable to create info file:\n%s", err)
 	}
 
-	return id, nil
+	return uploadId, nil
 }
 
 func (store S3Store) writeInfo(uploadId string, info tusd.FileInfo) error {
