@@ -288,7 +288,9 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 
 	// Parse metadata
 	meta := ParseMetadataHeader(r.Header.Get("Upload-Metadata"))
-	var file_id := r.Header.Get("FileId")
+	var file_id string 
+	file_id := r.Header.Get("FileId")
+	handler.log("FileId", r.Header.Get("FileId"))
 
 	info := FileInfo{
 		Size:           size,
