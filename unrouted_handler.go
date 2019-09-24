@@ -170,7 +170,7 @@ func (handler *UnroutedHandler) Middleware(h http.Handler) http.Handler {
 			r.Method = newMethod
 		}
 
-		handler.log("RequestIncoming", "method", r.Method, "path", r.URL.Path)
+		handler.log("RequestIncoming", "method", r.Method, "path", r.URL.Path, "file_id", r.Header.Get("FileId"))
 
 		handler.Metrics.incRequestsTotal(r.Method)
 
