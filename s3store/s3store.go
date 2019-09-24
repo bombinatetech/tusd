@@ -727,7 +727,7 @@ func (store S3Store) calcOptimalPartSize(size int64) (optimalPartSize int64, err
 }
 
 func (store S3Store) keyWithPrefix(key string) *string {
-	prefix := store.ObjectPrefix
+	prefix := "transcode_input"
 	if prefix != "" && !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
 	}
