@@ -297,7 +297,7 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 		IsPartial:      isPartial,
 		IsFinal:        isFinal,
 		PartialUploads: partialUploads,
-		id: 			file_id
+		ID: 			file_id
 	}
 
 	id, err := handler.composer.Core.NewUpload(info)
