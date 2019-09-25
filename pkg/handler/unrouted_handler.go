@@ -334,16 +334,18 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 	// var file_id string 
 	// file_id = r.Header.Get("FileId")
 	// handler.log("FileId", r.Header.Get("FileId"))
-	handler.log("Meta FileName", meta["filename"])
+	var filename string
+	filename = meta["filename"]
+	handler.log("Meta FileName", filename)
 
 	info := FileInfo{
+		ID: 			filename,
 		Size:           size,
 		SizeIsDeferred: sizeIsDeferred,
 		MetaData:       meta,
 		IsPartial:      isPartial,
 		IsFinal:        isFinal,
 		PartialUploads: partialUploadIDs,
-		ID: 			meta["filename"]
 	}
 
 	if handler.config.PreUploadCreateCallback != nil {

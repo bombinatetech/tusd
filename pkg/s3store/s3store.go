@@ -207,6 +207,8 @@ func (store S3Store) NewUpload(ctx context.Context, info handler.FileInfo) (hand
 		Key:      store.keyWithPrefix(uploadId),
 		Metadata: metadata,
 	})
+	// Just to get away with 'res' not used compile error for now
+	_ = res
 	if err != nil {
 		return nil, fmt.Errorf("s3store: unable to create multipart upload:\n%s", err)
 	}
@@ -220,13 +222,13 @@ func (store S3Store) NewUpload(ctx context.Context, info handler.FileInfo) (hand
 		"Key":    *store.keyWithPrefix(uploadId),
 	}
 
-	upload := &s3Upload{id, &store, nil}
+	upload := &s3Upload{info.ID, &store, nil}
 	err = upload.writeInfo(ctx, info)
 	if err != nil {
 		return nil, fmt.Errorf("s3store: unable to create info file:\n%s", err)
 	}
 
-	return uploadId, nil
+	return upload, nil
 }
 
 func (store S3Store) GetUpload(ctx context.Context, id string) (handler.Upload, error) {
