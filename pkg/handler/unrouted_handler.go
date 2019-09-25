@@ -15,6 +15,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+	"fmt"
 )
 
 const UploadLengthDeferred = "1"
@@ -362,6 +363,7 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 	}
 
 	info, err = upload.GetInfo(ctx)
+	handler.log("S3UploadInfo", "bucket", info.Storage["bucket"], "key", info.Storage["key"])
 	if err != nil {
 		handler.sendError(w, r, err)
 		return
@@ -373,6 +375,7 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 	// include it in cases of failure when an error is returned
 	url := handler.absFileURL(r, id)
 	w.Header().Set("Location", url)
+	w.Header().Set("S3Url", fmt.Sprintf("https://s3.ap-south-1.amazonaws.com/%s/%s", info.Storage["bucket"], info.Storage["key"]))
 
 	handler.Metrics.incUploadsCreated()
 	handler.log("UploadCreated", "id", id, "size", i64toa(size), "url", url)
