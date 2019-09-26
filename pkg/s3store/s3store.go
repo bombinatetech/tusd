@@ -185,8 +185,7 @@ func (store S3Store) NewUpload(ctx context.Context, info handler.FileInfo) (hand
 		return nil, fmt.Errorf("s3store: upload size of %v bytes exceeds MaxObjectSize of %v bytes", info.Size, store.MaxObjectSize)
 	}
 
-	var uploadId string
-	uploadId = info.ID
+	uploadId := info.ID
 
 	// Convert meta data into a map of pointers for AWS Go SDK, sigh.
 	metadata := make(map[string]*string, len(info.MetaData))
@@ -209,9 +208,10 @@ func (store S3Store) NewUpload(ctx context.Context, info handler.FileInfo) (hand
 		return nil, fmt.Errorf("s3store: unable to create multipart upload:\n%s", err)
 	}
 
-	log.Println("S3MultiPart response: ", res.UploadId)
+	res_json, _ := json.Marshal(res)
+	log.Println("S3 CreateMultipartUploadWithContext Response: ", string(res_json))
 	// id = uploadId + "+" + *res.UploadId
-	info.ID = uploadId + "+" + uploadId
+	info.ID = uploadId
 
 	info.Storage = map[string]string{
 		"Type":   "s3store",

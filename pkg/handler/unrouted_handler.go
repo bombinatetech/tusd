@@ -367,7 +367,7 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 	info, err = upload.GetInfo(ctx)
 	// Debugging purpose, will remove this once tested
 	info_json, _ := json.Marshal(info)
-	handler.log("S3UploadInfo", "bucket", info.Storage["bucket"], "key", info.Storage["key"], "info", string(info_json))
+	handler.log("S3UploadInfo", "bucket", info.Storage["Bucket"], "key", info.Storage["Key"], "info", string(info_json))
 	if err != nil {
 		handler.sendError(w, r, err)
 		return
@@ -379,7 +379,7 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 	// include it in cases of failure when an error is returned
 	url := handler.absFileURL(r, id)
 	w.Header().Set("Location", url)
-	w.Header().Set("S3Url", fmt.Sprintf("https://s3.ap-south-1.amazonaws.com/%s/%s", info.Storage["bucket"], info.Storage["key"]))
+	w.Header().Set("S3Url", fmt.Sprintf("https://s3.%s.amazonaws.com/%s/%s", os.Getenv("AWS_REGION"), info.Storage["Bucket"], info.Storage["Key"]))
 
 	handler.Metrics.incUploadsCreated()
 	handler.log("UploadCreated", "id", id, "size", i64toa(size), "url", url)
@@ -486,6 +486,8 @@ func (handler *UnroutedHandler) HeadFile(w http.ResponseWriter, r *http.Request)
 
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Upload-Offset", strconv.FormatInt(info.Offset, 10))
+	w.Header().Set("S3Url", fmt.Sprintf("https://s3.%s.amazonaws.com/%s/%s", os.Getenv("AWS_REGION"), info.Storage["Bucket"], info.Storage["Key"]))
+
 	handler.sendResp(w, r, http.StatusOK)
 }
 
