@@ -1,4 +1,4 @@
-FROM golang:1.12-alpine AS builder
+FROM golang:1.13-alpine AS builder
 
 # Copy in the git repo from the build context
 COPY . /go/src/github.com/tus/tusd/
@@ -29,9 +29,11 @@ RUN apk add --no-cache ca-certificates jq gcc \
     && mkdir -p /srv/tusd-data \
     && chown tusd:tusd /srv/tusd-data
 
+      
 WORKDIR /srv/tusd-data
 EXPOSE 1080
-ENTRYPOINT ["tusd"]
-CMD ["--hooks-dir","/srv/tusd-hooks"]
+#ENTRYPOINT ["/usr/local/bin/tusd"]
+#CMD ["--hooks-dir","/srv/tusd-hooks"]
+CMD ["/usr/local/bin/tusd", "-s3-bucket=ans.video.input"]
 
 USER tusd
