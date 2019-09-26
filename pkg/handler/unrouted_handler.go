@@ -16,6 +16,7 @@ import (
 	"sync/atomic"
 	"time"
 	"fmt"
+	"encoding/json"
 )
 
 const UploadLengthDeferred = "1"
@@ -364,7 +365,9 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 	}
 
 	info, err = upload.GetInfo(ctx)
-	handler.log("S3UploadInfo", "bucket", info.Storage["bucket"], "key", info.Storage["key"])
+	// Debugging purpose, will remove this once tested
+	info_json, _ := json.Marshal(info)
+	handler.log("S3UploadInfo", "bucket", info.Storage["bucket"], "key", info.Storage["key"], "info", string(info_json))
 	if err != nil {
 		handler.sendError(w, r, err)
 		return
