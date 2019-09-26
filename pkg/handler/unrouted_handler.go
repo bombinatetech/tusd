@@ -277,6 +277,7 @@ func (handler *UnroutedHandler) Middleware(h http.Handler) http.Handler {
 func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	handler.log("StartPostFile", "ver", "1")
 	// Check for presence of application/offset+octet-stream. If another content
 	// type is defined, it will be ignored and treated as none was set because
 	// some HTTP clients may enforce a default value for this header.
