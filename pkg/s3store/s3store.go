@@ -210,8 +210,7 @@ func (store S3Store) NewUpload(ctx context.Context, info handler.FileInfo) (hand
 
 	res_json, _ := json.Marshal(res)
 	log.Println("S3 CreateMultipartUploadWithContext Response: ", string(res_json))
-	// id = uploadId + "+" + *res.UploadId
-	info.ID = uploadId
+	info.ID = uploadId + "+" + *res.UploadId
 
 	info.Storage = map[string]string{
 		"Type":   "s3store",
