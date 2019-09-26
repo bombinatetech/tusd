@@ -80,8 +80,9 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"log"
 
-	"github.com/tus/tusd/internal/uid"
+	// "github.com/tus/tusd/internal/uid"
 	"github.com/tus/tusd/pkg/handler"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -185,12 +186,7 @@ func (store S3Store) NewUpload(ctx context.Context, info handler.FileInfo) (hand
 	}
 
 	var uploadId string
-	if info.ID == "" {
-		uploadId = uid.Uid()
-	} else {
-		// certain tests set info.ID in advance
-		uploadId = info.ID
-	}
+	uploadId = info.ID
 
 	// Convert meta data into a map of pointers for AWS Go SDK, sigh.
 	metadata := make(map[string]*string, len(info.MetaData))
@@ -207,14 +203,15 @@ func (store S3Store) NewUpload(ctx context.Context, info handler.FileInfo) (hand
 		Key:      store.keyWithPrefix(uploadId),
 		Metadata: metadata,
 	})
-	// Just to get away with 'res' not used compile error for now
-	_ = res
+	// // Just to get away with 'res' not used compile error for now
+	// _ = res
 	if err != nil {
 		return nil, fmt.Errorf("s3store: unable to create multipart upload:\n%s", err)
 	}
 
+	log.Println("S3MultiPart response: ", res.UploadId)
 	// id = uploadId + "+" + *res.UploadId
-	info.ID = uploadId
+	info.ID = uploadId + "+" + uploadId
 
 	info.Storage = map[string]string{
 		"Type":   "s3store",
