@@ -34,6 +34,6 @@ WORKDIR /srv/tusd-data
 EXPOSE 1080
 #ENTRYPOINT ["/usr/local/bin/tusd"]
 #CMD ["--hooks-dir","/srv/tusd-hooks"]
-CMD ["/usr/local/bin/tusd", "-s3-bucket=ans.video.input", "-timeout 60000"]
+CMD ["/usr/local/bin/tusd", "-s3-bucket=ans.video.input", "-timeout=60000"]
 
 USER tusd
