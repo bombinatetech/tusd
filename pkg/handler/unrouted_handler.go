@@ -336,7 +336,7 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 	// file_id = r.Header.Get("FileId")
 	// handler.log("FileId", r.Header.Get("FileId"))
 	var filename string
-	filename = meta["filename"]
+	filename = r.Header.Get("FileId")
 	handler.log("Meta FileName", filename)
 
 	info := FileInfo{
