@@ -431,6 +431,7 @@ func (handler *UnroutedHandler) HeadFile(w http.ResponseWriter, r *http.Request)
 	ctx := r.Context()
 
 	id, err := extractIDFromPath(r.URL.Path)
+	handler.log("HeadFileRequest", "id", id)
 	if err != nil {
 		handler.sendError(w, r, err)
 		return
@@ -510,6 +511,7 @@ func (handler *UnroutedHandler) PatchFile(w http.ResponseWriter, r *http.Request
 	}
 
 	id, err := extractIDFromPath(r.URL.Path)
+	handler.log("PatchFileEvent", "id", id)
 	if err != nil {
 		handler.sendError(w, r, err)
 		return
