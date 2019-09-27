@@ -278,7 +278,6 @@ func (handler *UnroutedHandler) Middleware(h http.Handler) http.Handler {
 func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	handler.log("StartPostFile", "ver", "1")
 	// Check for presence of application/offset+octet-stream. If another content
 	// type is defined, it will be ignored and treated as none was set because
 	// some HTTP clients may enforce a default value for this header.
@@ -339,7 +338,7 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 	// handler.log("FileId", r.Header.Get("FileId"))
 	var filename string
 	filename = r.Header.Get("FileId")
-	handler.log("Meta FileName", "filename", filename)
+	handler.log("PostFile: MetaFileName", "filename", filename)
 
 	info := FileInfo{
 		ID: 			filename,
@@ -367,7 +366,7 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 	info, err = upload.GetInfo(ctx)
 	// Debugging purpose, will remove this once tested
 	info_json, _ := json.Marshal(info)
-	handler.log("S3UploadInfo", "bucket", info.Storage["Bucket"], "key", info.Storage["Key"], "info", string(info_json))
+	handler.log("PostFile: S3UploadInfo", "bucket", info.Storage["Bucket"], "key", info.Storage["Key"], "info", string(info_json))
 	if err != nil {
 		handler.sendError(w, r, err)
 		return
@@ -382,7 +381,7 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("S3Url", fmt.Sprintf("https://s3.%s.amazonaws.com/%s/%s", os.Getenv("AWS_REGION"), info.Storage["Bucket"], info.Storage["Key"]))
 
 	handler.Metrics.incUploadsCreated()
-	handler.log("UploadCreated", "id", id, "size", i64toa(size), "url", url)
+	handler.log("PostFile: UploadCreated", "id", id, "size", i64toa(size), "url", url)
 
 	if handler.config.NotifyCreatedUploads {
 		handler.CreatedUploads <- newHookEvent(info, r)
@@ -404,7 +403,10 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 	if containsChunk {
 		if handler.composer.UsesLocker {
 			lock, err := handler.lockUpload(id)
+			handler.log("PostFile: LockUpload: ")
 			if err != nil {
+				err_json, _ := json.Marshal(err)
+				handler.log("PostFile: LockUpload: Error: ", "err", string(err_json))
 				handler.sendError(w, r, err)
 				return
 			}
@@ -413,10 +415,13 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 		}
 
 		if err := handler.writeChunk(upload, info, w, r); err != nil {
+			err_json, _ := json.Marshal(err)
+			handler.log("PostFile: WriteChunk: Error: ", "err", string(err_json))
 			handler.sendError(w, r, err)
 			return
 		}
 	} else if !sizeIsDeferred && size == 0 {
+		handler.log("PostFile: finishUploadIfComplete: ", "sizeIsDeferred", sizeIsDeferred, "size", size)
 		// Directly finish the upload if the upload is empty (i.e. has a size of 0).
 		// This statement is in an else-if block to avoid causing duplicate calls
 		// to finishUploadIfComplete if an upload is empty and contains a chunk.

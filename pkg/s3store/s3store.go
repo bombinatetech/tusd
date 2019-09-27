@@ -273,6 +273,8 @@ func (upload s3Upload) WriteChunk(ctx context.Context, offset int64, src io.Read
 
 	uploadId, multipartId := splitIds(id)
 
+	log.Println("S3WriteChunk: ", uploadId, multipartId, offset)
+
 	// Get the total size of the current upload
 	info, err := upload.GetInfo(ctx)
 	if err != nil {
@@ -352,15 +354,20 @@ func (upload s3Upload) WriteChunk(ctx context.Context, offset int64, src io.Read
 				PartNumber: aws.Int64(nextPartNum),
 				Body:       file,
 			})
+			err_json, _ := json.Marshal(err)
+			log.Println("S3WriteChunk: UploadPartWithContext: ", aws.String(multipartId), store.keyWithPrefix(uploadId), offset, nextPartNum, string(err_json))
 			if err != nil {
 				return bytesUploaded, err
 			}
 		} else {
 			if err := store.putIncompletePartForUpload(ctx, uploadId, file); err != nil {
+				err_json, _ := json.Marshal(err)
+				log.Println("S3WriteChunk: UploadPartWithContext: OnError: ", aws.String(multipartId), store.keyWithPrefix(uploadId), offset, nextPartNum, bytesUploaded, string(err_json))
 				return bytesUploaded, err
 			}
-
 			bytesUploaded += n
+
+			log.Println("S3WriteChunk: UploadPartWithContext: ", aws.String(multipartId), store.keyWithPrefix(uploadId), offset, nextPartNum, bytesUploaded)
 
 			return (bytesUploaded - incompletePartSize), nil
 		}
@@ -368,6 +375,9 @@ func (upload s3Upload) WriteChunk(ctx context.Context, offset int64, src io.Read
 		offset += n
 		bytesUploaded += n
 		nextPartNum += 1
+
+		// TODO: Check upload offset issue with s3
+		log.Println("S3WriteChunk: For Loop Iteration Done: ", offset, bytesUploaded, nextPartNum, id, uploadId)
 	}
 }
 
