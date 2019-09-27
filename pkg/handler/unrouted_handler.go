@@ -438,6 +438,7 @@ func (handler *UnroutedHandler) HeadFile(w http.ResponseWriter, r *http.Request)
 	id, err := extractIDFromPath(r.URL.Path)
 	handler.log("HeadFileRequest", "id", id)
 	if err != nil {
+		handler.log("HeadFileRequest", "id", id)
 		handler.sendError(w, r, err)
 		return
 	}
@@ -453,12 +454,16 @@ func (handler *UnroutedHandler) HeadFile(w http.ResponseWriter, r *http.Request)
 	}
 
 	upload, err := handler.composer.Core.GetUpload(ctx, id)
+	upload_json, _ := json.Marshal(upload)
+	handler.log("HeadFileRequest", "UploadObj", string(upload_json))
 	if err != nil {
 		handler.sendError(w, r, err)
 		return
 	}
 
 	info, err := upload.GetInfo(ctx)
+	info_json, _ := json.Marshal(info)
+	handler.log("HeadFileRequest", "InfoObj", string(info_json))
 	if err != nil {
 		handler.sendError(w, r, err)
 		return
