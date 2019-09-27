@@ -682,10 +682,11 @@ func (handler *UnroutedHandler) writeChunk(upload Upload, info FileInfo, w http.
 		}
 	}
 
-	handler.log("ChunkWriteComplete", "id", id, "bytesWritten", i64toa(bytesWritten))
-
 	// Send new offset to client
 	newOffset := offset + bytesWritten
+
+	handler.log("ChunkWriteComplete", "id", id, "bytesWritten", i64toa(bytesWritten), "NewOffset", strconv.FormatInt(newOffset, 10))
+
 	w.Header().Set("Upload-Offset", strconv.FormatInt(newOffset, 10))
 	handler.Metrics.incBytesReceived(uint64(bytesWritten))
 	info.Offset = newOffset
