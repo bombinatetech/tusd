@@ -509,6 +509,7 @@ func (handler *UnroutedHandler) PatchFile(w http.ResponseWriter, r *http.Request
 
 	// Check for presence of application/offset+octet-stream
 	if r.Header.Get("Content-Type") != "application/offset+octet-stream" {
+		handler.log("PatchFile", "Err", "ErrInvalidContentType")
 		handler.sendError(w, r, ErrInvalidContentType)
 		return
 	}
@@ -516,13 +517,15 @@ func (handler *UnroutedHandler) PatchFile(w http.ResponseWriter, r *http.Request
 	// Check for presence of a valid Upload-Offset Header
 	offset, err := strconv.ParseInt(r.Header.Get("Upload-Offset"), 10, 64)
 	if err != nil || offset < 0 {
+		handler.log("PatchFile", "Err", "ErrInvalidOffset", "Offset", string(offset))
 		handler.sendError(w, r, ErrInvalidOffset)
 		return
 	}
 
 	id, err := extractIDFromPath(r.URL.Path)
-	handler.log("PatchFileEvent", "id", id)
 	if err != nil {
+		err_json, _ := json.Marshal(err)
+		handler.log("PatchFile", "Err", "ExtractId", "Id", id, "Err", string(err_json))
 		handler.sendError(w, r, err)
 		return
 	}
@@ -530,6 +533,8 @@ func (handler *UnroutedHandler) PatchFile(w http.ResponseWriter, r *http.Request
 	if handler.composer.UsesLocker {
 		lock, err := handler.lockUpload(id)
 		if err != nil {
+			err_json, _ := json.Marshal(err)
+			handler.log("PatchFile", "Err", "LockUpload", "Id", id, "Err", string(err_json))
 			handler.sendError(w, r, err)
 			return
 		}
@@ -539,23 +544,29 @@ func (handler *UnroutedHandler) PatchFile(w http.ResponseWriter, r *http.Request
 
 	upload, err := handler.composer.Core.GetUpload(ctx, id)
 	if err != nil {
+		err_json, _ := json.Marshal(err)
+		handler.log("PatchFile", "Err", "GetUpload", "Id", id, "Err", string(err_json))
 		handler.sendError(w, r, err)
 		return
 	}
 
 	info, err := upload.GetInfo(ctx)
 	if err != nil {
+		err_json, _ := json.Marshal(err)
+		handler.log("PatchFile", "Err", "GetInfo", "Id", id, "Err", string(err_json))
 		handler.sendError(w, r, err)
 		return
 	}
 
 	// Modifying a final upload is not allowed
 	if info.IsFinal {
+		handler.log("PatchFile", "Err", "ModifyFinalUpload", "Id", id)
 		handler.sendError(w, r, ErrModifyFinal)
 		return
 	}
 
 	if offset != info.Offset {
+		handler.log("PatchFile", "Err", "OffsetMismatch", "Offset", string(offset), "InfoOffset", string(info.Offset))
 		handler.sendError(w, r, ErrMismatchOffset)
 		return
 	}
@@ -573,17 +584,20 @@ func (handler *UnroutedHandler) PatchFile(w http.ResponseWriter, r *http.Request
 			return
 		}
 		if !info.SizeIsDeferred {
+			handler.log("PatchFile", "Err", "ErrInvalidUploadLength")
 			handler.sendError(w, r, ErrInvalidUploadLength)
 			return
 		}
 		uploadLength, err := strconv.ParseInt(r.Header.Get("Upload-Length"), 10, 64)
 		if err != nil || uploadLength < 0 || uploadLength < info.Offset || (handler.config.MaxSize > 0 && uploadLength > handler.config.MaxSize) {
+			handler.log("PatchFile", "Err", "ErrInvalidUploadLength")
 			handler.sendError(w, r, ErrInvalidUploadLength)
 			return
 		}
 
 		lengthDeclarableUpload := handler.composer.LengthDeferrer.AsLengthDeclarableUpload(upload)
 		if err := lengthDeclarableUpload.DeclareLength(ctx, uploadLength); err != nil {
+			handler.log("PatchFile", "Err", "DeclareLength")
 			handler.sendError(w, r, err)
 			return
 		}
@@ -593,6 +607,8 @@ func (handler *UnroutedHandler) PatchFile(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := handler.writeChunk(upload, info, w, r); err != nil {
+		err_json, _ := json.Marshal(err)
+		handler.log("PatchFile", "Err", "WriteChunk", "err", string(err_json))
 		handler.sendError(w, r, err)
 		return
 	}
