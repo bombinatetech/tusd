@@ -1045,11 +1045,11 @@ func (handler *UnroutedHandler) sendProgressMessages(hook HookEvent, reader io.R
 // X-Forwarded-Proto and Forwarded headers will also be checked to
 // support proxies.
 func getHostAndProtocol(r *http.Request, allowForwarded bool) (host, proto string) {
-	// if r.TLS != nil {
-	// 	proto = "https"
-	// } else {
-	proto = "https"
-	// }
+	if r.TLS != nil {
+		proto = "https"
+	} else {
+		proto = "http"
+	}
 
 	host = r.Host
 
@@ -1061,18 +1061,18 @@ func getHostAndProtocol(r *http.Request, allowForwarded bool) (host, proto strin
 		host = h
 	}
 
-	// if h := r.Header.Get("X-Forwarded-Proto"); h == "http" || h == "https" {
-	// 	proto = h
-	// }
+	if h := r.Header.Get("X-Forwarded-Proto"); h == "http" || h == "https" {
+		proto = h
+	}
 
 	if h := r.Header.Get("Forwarded"); h != "" {
 		if r := reForwardedHost.FindStringSubmatch(h); len(r) == 2 {
 			host = r[1]
 		}
 
-		// if r := reForwardedProto.FindStringSubmatch(h); len(r) == 2 {
-		// 	proto = r[1]
-		// }
+		if r := reForwardedProto.FindStringSubmatch(h); len(r) == 2 {
+			proto = r[1]
+		}
 	}
 
 	return
