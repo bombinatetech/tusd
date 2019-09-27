@@ -421,7 +421,7 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 			return
 		}
 	} else if !sizeIsDeferred && size == 0 {
-		handler.log("PostFile: finishUploadIfComplete: ", "sizeIsDeferred", sizeIsDeferred, "size", size)
+		handler.log("PostFile: finishUploadIfComplete: ", "sizeIsDeferred", strconv.FormatBool(sizeIsDeferred), "size", strconv.FormatInt(size, 10))
 		// Directly finish the upload if the upload is empty (i.e. has a size of 0).
 		// This statement is in an else-if block to avoid causing duplicate calls
 		// to finishUploadIfComplete if an upload is empty and contains a chunk.
