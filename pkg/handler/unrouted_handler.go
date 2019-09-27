@@ -1048,7 +1048,7 @@ func getHostAndProtocol(r *http.Request, allowForwarded bool) (host, proto strin
 	// if r.TLS != nil {
 	// 	proto = "https"
 	// } else {
-	proto = "http"
+	proto = "https"
 	// }
 
 	host = r.Host
