@@ -277,7 +277,10 @@ func (upload s3Upload) WriteChunk(ctx context.Context, offset int64, src io.Read
 
 	// Get the total size of the current upload
 	info, err := upload.GetInfo(ctx)
+	info_json, _ := json.Marshal(info)
 	if err != nil {
+		err_json, _ := json.Marshal(err)
+		log.Println("S3WriteChunk: GetInfoError: ", string(info_json), string(err_json))
 		return 0, err
 	}
 
@@ -285,12 +288,16 @@ func (upload s3Upload) WriteChunk(ctx context.Context, offset int64, src io.Read
 	bytesUploaded := int64(0)
 	optimalPartSize, err := store.calcOptimalPartSize(size)
 	if err != nil {
+		err_json, _ := json.Marshal(err)
+		log.Println("S3WriteChunk: CalcOptimalPartSizeError: ", string(info_json), string(err_json))
 		return 0, err
 	}
 
 	// Get number of parts to generate next number
 	parts, err := store.listAllParts(ctx, id)
 	if err != nil {
+		err_json, _ := json.Marshal(err)
+		log.Println("S3WriteChunk: ListAllPartsError: ", string(info_json), string(err_json))
 		return 0, err
 	}
 
@@ -299,6 +306,8 @@ func (upload s3Upload) WriteChunk(ctx context.Context, offset int64, src io.Read
 
 	incompletePartFile, incompletePartSize, err := store.downloadIncompletePartForUpload(ctx, uploadId)
 	if err != nil {
+		err_json, _ := json.Marshal(err)
+		log.Println("S3WriteChunk: DownloadIncompletePartForUploadError: ", string(info_json), string(err_json))
 		return 0, err
 	}
 	if incompletePartFile != nil {
@@ -306,6 +315,8 @@ func (upload s3Upload) WriteChunk(ctx context.Context, offset int64, src io.Read
 		defer incompletePartFile.Close()
 
 		if err := store.deleteIncompletePartForUpload(ctx, uploadId); err != nil {
+			err_json, _ := json.Marshal(err)
+			log.Println("S3WriteChunk: DeleteIncompletePartForUploadError: ", string(info_json), string(err_json))
 			return 0, err
 		}
 
@@ -316,6 +327,8 @@ func (upload s3Upload) WriteChunk(ctx context.Context, offset int64, src io.Read
 		// Create a temporary file to store the part in it
 		file, err := ioutil.TempFile("", "tusd-s3-tmp-")
 		if err != nil {
+			err_json, _ := json.Marshal(err)
+			log.Println("S3WriteChunk: TempFileError: ", string(info_json), string(err_json))
 			return bytesUploaded, err
 		}
 		defer os.Remove(file.Name())
@@ -330,11 +343,15 @@ func (upload s3Upload) WriteChunk(ctx context.Context, offset int64, src io.Read
 		// on purpose or accidentally. Therefore, we ignore this error to not
 		// prevent the remaining chunk to be stored on S3.
 		if err == io.ErrUnexpectedEOF {
+			err_json, _ := json.Marshal(err)
+			log.Println("S3WriteChunk: CopyError ErrUnexpectedEOF: ", string(info_json), string(err_json))
 			err = nil
 		}
 
 		// io.Copy does not return io.EOF, so we not have to handle it differently.
 		if err != nil {
+			err_json, _ := json.Marshal(err)
+			log.Println("S3WriteChunk: CopyError: ", string(info_json), string(err_json))
 			return bytesUploaded, err
 		}
 		// If io.Copy is finished reading, it will always return (0, nil).
@@ -354,15 +371,15 @@ func (upload s3Upload) WriteChunk(ctx context.Context, offset int64, src io.Read
 				PartNumber: aws.Int64(nextPartNum),
 				Body:       file,
 			})
-			err_json, _ := json.Marshal(err)
-			log.Println("S3WriteChunk: UploadPartWithContext: ", aws.String(multipartId), store.keyWithPrefix(uploadId), offset, nextPartNum, string(err_json))
 			if err != nil {
+				err_json, _ := json.Marshal(err)
+				log.Println("S3WriteChunk: UploadPartWithContextError: ", aws.String(multipartId), store.keyWithPrefix(uploadId), offset, nextPartNum, string(err_json))
 				return bytesUploaded, err
 			}
 		} else {
 			if err := store.putIncompletePartForUpload(ctx, uploadId, file); err != nil {
 				err_json, _ := json.Marshal(err)
-				log.Println("S3WriteChunk: UploadPartWithContext: OnError: ", aws.String(multipartId), store.keyWithPrefix(uploadId), offset, nextPartNum, bytesUploaded, string(err_json))
+				log.Println("S3WriteChunk: PutIncompletePartForUploadError: ", aws.String(multipartId), store.keyWithPrefix(uploadId), offset, nextPartNum, bytesUploaded, string(err_json))
 				return bytesUploaded, err
 			}
 			bytesUploaded += n
