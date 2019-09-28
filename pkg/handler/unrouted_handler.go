@@ -507,6 +507,9 @@ func (handler *UnroutedHandler) HeadFile(w http.ResponseWriter, r *http.Request)
 func (handler *UnroutedHandler) PatchFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	header_json, _ := json.Marshal(r.Header)
+	handler.log("PatchFile", "Headers", string(header_json))
+
 	// Check for presence of application/offset+octet-stream
 	if r.Header.Get("Content-Type") != "application/offset+octet-stream" {
 		handler.log("PatchFile", "Err", "ErrInvalidContentType")
