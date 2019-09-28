@@ -283,6 +283,9 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 	// some HTTP clients may enforce a default value for this header.
 	containsChunk := r.Header.Get("Content-Type") == "application/offset+octet-stream"
 
+	headers_json, _ := json.Marshal(r.Header)
+	handler.log("PostFile", "Headers", string(headers_json))
+
 	// Only use the proper Upload-Concat header if the concatenation extension
 	// is even supported by the data store.
 	var concatHeader string
@@ -435,10 +438,15 @@ func (handler *UnroutedHandler) PostFile(w http.ResponseWriter, r *http.Request)
 func (handler *UnroutedHandler) HeadFile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	header_json, _ := json.Marshal(r.Header)
+	
 	id, err := extractIDFromPath(r.URL.Path)
-	handler.log("HeadFileRequest", "id", id)
+
+	handler.log("HeadFile", "Headers", string(header_json), "id", id)
+
 	if err != nil {
-		handler.log("HeadFileRequest", "id", id)
+		err_json, _ := json.Marshal(err)
+		handler.log("HeadFile", "id", id, "extractIDFromPathError", string(err_json))
 		handler.sendError(w, r, err)
 		return
 	}
@@ -446,6 +454,8 @@ func (handler *UnroutedHandler) HeadFile(w http.ResponseWriter, r *http.Request)
 	if handler.composer.UsesLocker {
 		lock, err := handler.lockUpload(id)
 		if err != nil {
+			err_json, _ := json.Marshal(err)
+			handler.log("HeadFile", "id", id, "lockUploadError", string(err_json))
 			handler.sendError(w, r, err)
 			return
 		}
@@ -455,16 +465,20 @@ func (handler *UnroutedHandler) HeadFile(w http.ResponseWriter, r *http.Request)
 
 	upload, err := handler.composer.Core.GetUpload(ctx, id)
 	upload_json, _ := json.Marshal(upload)
-	handler.log("HeadFileRequest", "UploadObj", string(upload_json))
+	handler.log("HeadFile", "UploadObj", string(upload_json))
 	if err != nil {
+		err_json, _ := json.Marshal(err)
+		handler.log("HeadFile", "id", id, "GetUploadError", string(err_json))
 		handler.sendError(w, r, err)
 		return
 	}
 
 	info, err := upload.GetInfo(ctx)
 	info_json, _ := json.Marshal(info)
-	handler.log("HeadFileRequest", "InfoObj", string(info_json))
+	handler.log("HeadFile", "InfoObj", string(info_json))
 	if err != nil {
+		err_json, _ := json.Marshal(err)
+		handler.log("HeadFile", "id", id, "GetInfoError", string(err_json))
 		handler.sendError(w, r, err)
 		return
 	}
@@ -652,7 +666,7 @@ func (handler *UnroutedHandler) writeChunk(upload Upload, info FileInfo, w http.
 		maxSize = length
 	}
 
-	handler.log("ChunkWriteStart", "id", id, "maxSize", i64toa(maxSize), "offset", i64toa(offset))
+	handler.log("WriteChunk", "id", id, "maxSize", i64toa(maxSize), "offset", i64toa(offset))
 
 	var bytesWritten int64
 	// Prevent a nil pointer dereference when accessing the body which may not be
@@ -690,7 +704,7 @@ func (handler *UnroutedHandler) writeChunk(upload Upload, info FileInfo, w http.
 			if terminateErr := handler.terminateUpload(ctx, upload, info, r); terminateErr != nil {
 				// We only log this error and not show it to the user since this
 				// termination error is not relevant to the uploading client
-				handler.log("UploadStopTerminateError", "id", id, "error", terminateErr.Error())
+				handler.log("WriteChunk", "id", id, "UploadStopTerminateError", terminateErr.Error())
 			}
 		}
 
